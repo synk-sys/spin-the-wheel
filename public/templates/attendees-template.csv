@@ -1,0 +1,4 @@
+attendeeId,name,email,ticketNumber,company
+001,Alex Johnson,alex@example.com,DF001,Example Inc.
+002,Jordan Lee,jordan@example.com,DF002,
+003,Sam Patel,sam@example.com,DF003,"Acme, Inc."

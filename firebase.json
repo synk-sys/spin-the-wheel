@@ -1,0 +1,19 @@
+{
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "apphosting": [
+    {
+      "backendId": "devfest-raffle",
+      "rootDir": "/",
+      "ignore": ["node_modules", ".git", ".next", ".data", "test-results", "playwright-report", "tests"]
+    }
+  ],
+  "emulators": {
+    "firestore": { "port": 8085 },
+    "auth": { "port": 9099 },
+    "ui": { "enabled": false },
+    "singleProjectMode": true
+  }
+}

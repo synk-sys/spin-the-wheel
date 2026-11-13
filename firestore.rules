@@ -1,0 +1,24 @@
+rules_version = '2';
+
+// DevFest Toronto 2026 raffle — Firestore security rules.
+//
+// All privileged reads and writes go through the Next.js server using the
+// Firebase Admin SDK, which bypasses these rules. Browsers get exactly one
+// thing: read access to the projector-safe public display document.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Public projector state: names/ticket numbers of revealed winners, prize
+    // info, counts. Never contains emails or admin data. Read-only.
+    match /publicDisplay/{env} {
+      allow read: if env in ['production', 'demo'];
+      allow write: if false;
+    }
+
+    // Everything else (participants, prizes, draws, raffle state, audit logs,
+    // imports, idempotency keys) is private to the server.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

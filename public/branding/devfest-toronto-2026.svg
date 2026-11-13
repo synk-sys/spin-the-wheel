@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320" role="img" aria-label="DevFest Toronto 2026">
+  <!-- Placeholder brand mark. Replace this file (or set NEXT_PUBLIC_BRAND_LOGO_URL) with your official artwork. -->
+  <g stroke-linecap="round" stroke-width="22" fill="none">
+    <path d="M118 70 L62 126" stroke="#EA4335"/>
+    <path d="M62 126 L118 182" stroke="#4285F4"/>
+    <path d="M202 70 L258 126" stroke="#34A853"/>
+    <path d="M258 126 L202 182" stroke="#FBBC05"/>
+  </g>
+  <text x="160" y="238" text-anchor="middle" font-family="'Outfit','Segoe UI',Arial,sans-serif" font-weight="800" font-size="46" fill="#202124">DevFest</text>
+  <text x="160" y="278" text-anchor="middle" font-family="'Outfit','Segoe UI',Arial,sans-serif" font-weight="600" font-size="26" fill="#5f6368" letter-spacing="2">TORONTO 2026</text>
+</svg>

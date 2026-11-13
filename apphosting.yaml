@@ -1,0 +1,27 @@
+# Firebase App Hosting configuration for DevFest Toronto 2026: Spin the Wheel.
+# Docs: https://firebase.google.com/docs/app-hosting/configure
+
+runConfig:
+  # Keep one instance warm during the event so the first spin isn't a cold start.
+  minInstances: 1
+  maxInstances: 4
+  concurrency: 80
+  cpu: 1
+  memoryMiB: 512
+
+env:
+  # Durable storage. Required in production.
+  - variable: DATA_BACKEND
+    value: firestore
+    availability: [RUNTIME]
+
+  # Organizer allowlist, stored as a Cloud Secret Manager secret so emails
+  # aren't committed. Create it with:
+  #   firebase apphosting:secrets:set organizer-emails
+  - variable: ORGANIZER_EMAILS
+    secret: organizer-emails
+    availability: [RUNTIME]
+
+  # The Firebase web config (NEXT_PUBLIC_FIREBASE_*) is filled automatically
+  # from FIREBASE_WEBAPP_CONFIG, which App Hosting provides at build time
+  # (see next.config.ts). Override here only if you need a different web app.
