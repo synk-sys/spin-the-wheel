@@ -36,10 +36,13 @@ export function generateDemoAttendees(count = 300): ParticipantInput[] {
   return out;
 }
 
-export const SAMPLE_PRIZES: PrizeInput[] = [
-  { name: "DevFest Swag Pack", description: "T-shirt, stickers, and a water bottle", imageUrl: null, quantity: 5 },
-  { name: "Developer Merch Bundle", description: "Hoodie, backpack, and desk goodies", imageUrl: null, quantity: 3 },
-  { name: "Gift Card", description: "$100 gift card", imageUrl: null, quantity: 2 },
-  { name: "Mystery Prize", description: "Who knows? Only the wheel.", imageUrl: null, quantity: 1 },
+/**
+ * Default prize rounds: 3 winners in total, one per prize, drawn in this
+ * order. Used for the demo and pre-created in production on first setup.
+ * Organizers can rename, edit, add or remove prizes on the Prizes page.
+ */
+export const DEFAULT_PRIZES: PrizeInput[] = [
+  { name: "DevFest Swag Pack", description: "T-shirt, stickers, and a water bottle", imageUrl: null, quantity: 1 },
+  { name: "Gift Card", description: "$100 gift card", imageUrl: null, quantity: 1 },
   { name: "Grand Prize", description: "The big one — announced on stage", imageUrl: null, quantity: 1 },
 ];

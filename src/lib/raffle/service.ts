@@ -28,7 +28,7 @@ import {
 } from "../domain/types";
 import type { DocData, DocStore, Transaction } from "../store/types";
 import { planSpin, SPIN_DURATION_MS } from "../wheel/geometry";
-import { generateDemoAttendees, SAMPLE_PRIZES } from "./demo";
+import { DEFAULT_PRIZES, generateDemoAttendees } from "./demo";
 import { paths } from "./paths";
 import { newId, secureRandomIndex, selectUniform, type RandomIndex } from "./random";
 
@@ -45,6 +45,8 @@ export interface ServiceOptions {
   spinDurationMs?: number;
   /** Hook for tests: runs between pool selection and commit. */
   beforeCommit?: () => Promise<void>;
+  /** Pre-create DEFAULT_PRIZES in production on first setup (default true). */
+  seedDefaultPrizes?: boolean;
 }
 
 const DRAW_LOCK_TTL_MS = 30_000;
@@ -92,6 +94,7 @@ export class RaffleService {
   private readonly now: () => number;
   private readonly spinDurationMs: number;
   private readonly beforeCommit?: () => Promise<void>;
+  private readonly seedDefaultPrizes: boolean;
 
   constructor(
     private readonly store: DocStore,
@@ -101,6 +104,7 @@ export class RaffleService {
     this.now = opts.now ?? Date.now;
     this.spinDurationMs = opts.spinDurationMs ?? SPIN_DURATION_MS;
     this.beforeCommit = opts.beforeCommit;
+    this.seedDefaultPrizes = opts.seedDefaultPrizes ?? true;
   }
 
   // ------------------------------------------------------------------ state
@@ -136,6 +140,7 @@ export class RaffleService {
       return true;
     });
     if (created && env === "demo") await this.seedDemo(SYSTEM_ACTOR);
+    if (created && env === "production" && this.seedDefaultPrizes) await this.seedProductionPrizes(SYSTEM_ACTOR);
     if (created) await this.refreshPublic(env);
     return (await this.store.get<StateDoc>(paths.state(env)))!;
   }
@@ -865,6 +870,31 @@ export class RaffleService {
 
   // ------------------------------------------------------------------ demo
 
+  private defaultPrizes(env: RaffleEnv, now: number): Prize[] {
+    return DEFAULT_PRIZES.map((sp, i) => ({
+      prizeId: deterministicId("prz", env, String(i)),
+      ...sp,
+      remainingQuantity: sp.quantity,
+      drawOrder: i + 1,
+      status: "upcoming",
+      drawCount: 0,
+      createdAt: now,
+      updatedAt: now,
+    }));
+  }
+
+  /** Pre-creates the default prize rounds in production on first setup only. */
+  private async seedProductionPrizes(actor: Actor) {
+    const env: RaffleEnv = "production";
+    const prizes = this.defaultPrizes(env, this.now());
+    await this.store.bulkWrite(prizes.map((p) => ({ type: "set" as const, path: paths.prize(env, p.prizeId), data: asDoc(p) })));
+    await this.store.runTransaction(async (tx) => {
+      await this.readState(tx, env);
+      tx.update(paths.state(env), { currentPrizeId: prizes[0].prizeId, updatedAt: this.now() });
+      this.audit(tx, env, actor, "prizes.defaults_created", null, { prizes: prizes.map((p) => p.name) });
+    });
+  }
+
   private async seedDemo(actor: Actor) {
     const env: RaffleEnv = "demo";
     const now = this.now();
@@ -885,16 +915,7 @@ export class RaffleService {
       };
       return { type: "set" as const, path: paths.participant(env, p.participantId), data: asDoc(p) };
     });
-    const prizes: Prize[] = SAMPLE_PRIZES.map((sp, i) => ({
-      prizeId: deterministicId("prz", "demo", String(i)),
-      ...sp,
-      remainingQuantity: sp.quantity,
-      drawOrder: i + 1,
-      status: "upcoming",
-      drawCount: 0,
-      createdAt: now,
-      updatedAt: now,
-    }));
+    const prizes = this.defaultPrizes(env, now);
     await this.store.bulkWrite([...participantOps, ...prizes.map((p) => ({ type: "set" as const, path: paths.prize(env, p.prizeId), data: asDoc(p) }))]);
     await this.store.runTransaction(async (tx) => {
       const state = await this.readState(tx, env);

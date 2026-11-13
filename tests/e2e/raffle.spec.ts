@@ -61,6 +61,10 @@ test("void and redraw keeps history and excludes the voided winner", async ({ pa
   await display.goto("/display?env=demo");
 
   await page.goto("/admin/control");
+  // The first prize (quantity 1) was won in the first test; move to the next one.
+  await page.getByRole("button", { name: "Next prize" }).click();
+  await expect(page.getByLabel("Current prize")).toHaveValue(/prz_/);
+  await expect(page.getByTestId("spin-button")).toBeEnabled();
   await page.getByTestId("spin-button").click();
   // Wait for the new spin to start (the previous reveal clears), then for its reveal.
   await expect(display.getByText("Drawing now…")).toBeVisible();

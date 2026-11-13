@@ -161,7 +161,7 @@ export function DisplayScreen({ env }: { env: RaffleEnv }) {
         {/* Info panel */}
         <section className="absolute right-[100px] top-[195px] w-[800px]">
           <p className="text-[34px] font-semibold uppercase tracking-[0.25em] text-[#8ab4f8]">
-            {spinning ? "Drawing now…" : prize ? "Now drawing for" : "Get ready"}
+            {spinning ? "Drawing now…" : prize ? "\u00a0" : "Get ready"}
           </p>
           <AnimatePresence mode="wait">
             <motion.div

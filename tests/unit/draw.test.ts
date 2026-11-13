@@ -126,6 +126,7 @@ describe("concurrency and idempotency", () => {
     let excluded: string | null = null;
     // Always pick index 0 so we know who the first selection is.
     const service: RaffleService = new RaffleService(store, {
+      seedDefaultPrizes: false,
       now: () => t,
       rng: () => 0,
       beforeCommit: async () => {
@@ -360,13 +361,13 @@ describe("fairness simulation through the full draw path", () => {
     const runs = 3000;
     const counts = new Map<string, number>();
     const store = new MemoryStore(null);
-    const service = new RaffleService(store, { now: () => 1 });
+    const service = new RaffleService(store, { now: () => 1, seedDefaultPrizes: false });
     await seedParticipants(service, 10);
     // Quantity 1 is enough: voiding each draw returns the prize to the pool.
     const prize = await service.createPrize("production", ORGANIZER, { name: "P", quantity: 1 });
     // Each iteration draws once then voids + restores, so the pool is always the same 10 people.
     let t = 1;
-    const timed = new RaffleService(store, { now: () => (t += SPIN + 1) });
+    const timed = new RaffleService(store, { now: () => (t += SPIN + 1), seedDefaultPrizes: false });
     for (let i = 0; i < runs; i++) {
       const { draw } = await timed.draw("production", ORGANIZER, { prizeId: prize.prizeId, idempotencyKey: `sim-${i}-aaaa` });
       counts.set(draw.participantId, (counts.get(draw.participantId) ?? 0) + 1);
@@ -376,4 +377,28 @@ describe("fairness simulation through the full draw path", () => {
     expect(counts.size).toBe(10);
     expect(chiSquare([...counts.values()], runs / 10)).toBeLessThan(chiSquareCritical(9));
   }, 120_000);
+});
+
+describe("default prizes", () => {
+  it("demo and a fresh production raffle both start with 3 one-winner prizes", async () => {
+    const store = new MemoryStore(null);
+    let t = 1_800_000_000_000;
+    const service = new RaffleService(store, { now: () => (t += SPIN + 1) });
+    for (const env of ["demo", "production"] as const) {
+      const prizes = await service.listPrizes(env).then(async (p) => (p.length ? p : (await service.getState(env), service.listPrizes(env))));
+      expect(prizes.map((p) => [p.name, p.quantity])).toEqual([
+        ["DevFest Swag Pack", 1],
+        ["Gift Card", 1],
+        ["Grand Prize", 1],
+      ]);
+      expect((await service.getState(env)).currentPrizeId).toBe(prizes[0].prizeId);
+    }
+    // Demo raffle runs out after exactly 3 winners.
+    for (let i = 0; i < 3; i++) {
+      const prize = (await service.listPrizes("demo")).find((p) => p.remainingQuantity > 0)!;
+      await service.draw("demo", ORGANIZER, { prizeId: prize.prizeId, idempotencyKey: key() });
+    }
+    const pub = await service.getPublicDisplay("demo");
+    expect(pub).toMatchObject({ winnerCount: 3, prizesRemaining: 0, raffleStatus: "completed" });
+  });
 });

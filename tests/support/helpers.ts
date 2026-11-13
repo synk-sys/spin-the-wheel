@@ -19,7 +19,7 @@ export function fakeClock(start = 1_800_000_000_000) {
 export function makeService(opts: ServiceOptions = {}) {
   const store = new MemoryStore(null);
   const clock = fakeClock();
-  const service = new RaffleService(store, { now: clock.now, ...opts });
+  const service = new RaffleService(store, { now: clock.now, seedDefaultPrizes: false, ...opts });
   return { store, clock, service };
 }
 

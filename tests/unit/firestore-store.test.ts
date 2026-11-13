@@ -25,7 +25,7 @@ describe.skipIf(!enabled)("FirestoreStore (emulator)", () => {
         await new FirestoreStore(db).deleteCollection(`envs/${env}/${c}`);
       }
     }
-    service = new RaffleService(new FirestoreStore(db), { now: () => t });
+    service = new RaffleService(new FirestoreStore(db), { now: () => t, seedDefaultPrizes: false });
   });
 
   it("imports, draws uniformly from the pool, and is idempotent", async () => {
